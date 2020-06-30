@@ -1,15 +1,16 @@
 import CalculateWearOptions from './CalculateWearOptions'
-export default function CreateGenderSelects(props) {
+import React, { useState } from 'react'
 
-  console.log(props)
+export default function CreateGenderSelects({genders, wear}) {
+  let [currGender, setCurrGender] = useState('M')
   return ( 
     <div>
       <label > Gender 
-        <select onChange = { (e) => { CalculateWearOptions(e.currentTarget.value, props.wear)} } > 
-          { Object.keys(props.genders).map((item, i) => < option key = { i } value = { item } > {props.genders[item]} </option>)} 
+        <select onChange = { (e) => { setCurrGender(e.currentTarget.value)} } > 
+          { Object.keys(genders).map((item, i) => < option key = { i } value = { item } > {genders[item]} </option>)} 
         </select>
       </label> 
-      <CalculateWearOptions baseGen = {"F"} genderWear = {props.wear}/> 
+      { CalculateWearOptions(currGender, wear)}
     </div>
   )
 }

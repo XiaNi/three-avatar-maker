@@ -1,6 +1,5 @@
-import {useState} from 'react'
 
-export default function CalculateWearOptions({baseGen, genderWear}){
+export default function CalculateWearOptions(baseGen, genderWear){
     let option = ''
     let res = []
     genderWear[baseGen].map((item, i) => {
@@ -10,16 +9,15 @@ export default function CalculateWearOptions({baseGen, genderWear}){
               {res.push(
                <label key = {i}>{currOption}
                  <select key={i}>
+                   <option key={'none'} name={'none'}>None</option>
                    {genderWear[baseGen].map((item, i) => { 
-                       console.log(item[0], "item")
-                       console.log(currOption)
                        if(item[0] === currOption){
-                        return <option>{item[1]}</option>
+                        return <option key={i}>{item[1]}</option>
                        }  
                     })}
                  </select>
             </label>)}
           }
-      })    
+      })   
     return(res)
 }

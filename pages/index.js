@@ -1,25 +1,20 @@
 import * as THREE from 'three'
-import React, {useState, Suspense, useRef, useMemo} from 'react'
+import React, {Suspense, useRef, useState } from 'react'
+import NoSSR from 'react-no-ssr'
 import { Canvas, useLoader, useThree, useFrame, extend } from 'react-three-fiber'
-import { GLTFLoader } from '../node_modules/three/examples/jsm/loaders/GLTFLoader'
 import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls'
+import  Model  from '../components/ModelLoader'
+import CalculateWearOptions from '../components/CalculateWearOptions'
+import CreateGenderSelects from '../components/GenderSelect'
 extend({ OrbitControls })
-
-const renderLoader = () => <p>Loading</p>;
-
-function Model({ url }) {
-    const [glb, set] = useState()
-    useMemo(() => new GLTFLoader().load(url, set), [url])
-    return glb ? <primitive object={glb.scene} position={[0,-3,0]} scale={[200,200,200]} /> : null
-}
 
   function Plane({ ...props }) {
     // <meshLambertMaterial attach="material" color="#ff0000" transparent={false} opacity={0.2} />
     return (
       <mesh {...props} receiveShadow>
         <planeGeometry attach="geometry" args={[1000, 1000, 1, 1]} />
-        {/* <shadowMaterial attach="material" opacity={0.5} color={'red'} /> */}
-        <meshLambertMaterial attach="material" color="#ff0000" side={THREE.DoubleSide} transparent={false} opacity={0.2} />
+        {/* <shadowMaterial attach="material" /> */}
+        <meshStandardMaterial attach="material" color = {0x00ff00} side={THREE.DoubleSide} transparent={false} opacity={1} />
       </mesh>
     )
   }
@@ -28,7 +23,7 @@ function Model({ url }) {
     const texture = useLoader(THREE.TextureLoader, "panorama/pano_bg.jpg")
     return (
       <mesh {...props}>
-        <sphereGeometry attach="geometry" args={[50, 50, 50]} />
+        <sphereGeometry attach="geometry" args={[5, 32, 32]} />
         <meshBasicMaterial   map={texture}
                                side={THREE.BackSide}
                                attach="material" />
@@ -49,21 +44,52 @@ const CameraControls = () => {
     useFrame((state) => controls.current.update());
     return <orbitControls ref={controls} args={[camera, domElement]} />;
   };
+
+
+let gen = {
+              M : "Male",
+              F : "Female",
+              A : "Andriod"
+            }
   
 export default function Home(){
 
+  let [wear, setWear] = useState({
+    M : [],
+    F : [],
+    A : []
+  })
+  console.log('re')
     return(
-    <>
-  <Canvas>
+      <>
+    <CreateGenderSelects genders={gen} wear={wear}/>
+  <Canvas 
+  camera={{ position: [0, 0.1, 0.3] }}
+    shadowMap
+    //pixelRatio={window.devicePixelRatio}
+>
   <CameraControls />
-    <pointLight position={[10, 10, 10]} />
-    <Suspense fallback={null}>
-      <Panorama />
-    </Suspense>
-    <Suspense fallback={renderLoader()}>
-        <Model url ={ '/models/max_characters/untitled.gltf' }></Model>
-        <Plane rotation={[Math.PI*-0.5, 0, 0]} position={[0, -1, 0]}></Plane>
-    </Suspense>
+  <fog attach="fog" args={[0xdfdfdf, .5, 10]} />
+
+    <spotLight position={[0, .7, 0]} 
+          shadow-mapSize-width = {1024*5} // default
+          shadow-mapSize-height = {1024*5} // default
+          shadow-bias = {-0.0001}
+          shadow-camera-near = {0.1}
+          castShadow />
+    <Suspense fallback={null}><Panorama /></Suspense>
+    <Model url ={ '/models/max_characters/untitled.glb' } position={[0, 0, 0]} scale={[10,10,10]} onWearLoaded={(newWear)=> setWear(newWear) } castShadow></Model>
+    <Plane rotation={[Math.PI/2, 0, 0]} position={[0, 0, 0]}></Plane>
+
+    <mesh
+  visible
+  castShadow
+  position={new THREE.Vector3(0.2, 0.3, 0)}
+  rotation={new THREE.Euler(Math.PI / 2, 0, 0)}
+  geometry={new THREE.SphereGeometry(.1, 16, 16)}
+  material={new THREE.MeshStandardMaterial({ color: new THREE.Color('hotpink') })}
+/>
+
   </Canvas>
   </>
     )
