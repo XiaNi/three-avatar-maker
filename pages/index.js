@@ -5,7 +5,7 @@ import { Canvas, useLoader, useThree, useFrame, extend } from 'react-three-fiber
 import { OrbitControls } from '../node_modules/three/examples/jsm/controls/OrbitControls'
 import  Model  from '../components/ModelLoader'
 import CalculateWearOptions from '../components/CalculateWearOptions'
-import CreateGenderSelects from '../components/GenderSelect'
+import GenderSelects from '../components/GenderSelect'
 extend({ OrbitControls })
 
   function Plane({ ...props }) {
@@ -51,7 +51,6 @@ let gen = {
               F : "Female",
               A : "Andriod"
             }
-  
 export default function Home(){
 
   let [wear, setWear] = useState({
@@ -60,9 +59,33 @@ export default function Home(){
     A : []
   })
   console.log('re')
+  let[selectedOptions, setSelectedOptions] = useState({gender: "F"})
+
+  function onWearLoaded(newWear){
+    console.log(newWear)
+    setWear(newWear);
+    setSelectedOptions(currentOptions => {
+      const newSelectedOptions = { ...currentOptions }
+      newWear[selectedOptions.gender].forEach( wear => {
+        if(wear.LOD === "Base" || wear.LOD === "LOD0"){
+          newSelectedOptions[wear.slot] = wear.key
+        }
+      })
+      console.log(newSelectedOptions)
+      return newSelectedOptions;
+      })
+  }
+  function onWearChange(slot, value){
+    setSelectedOptions(currentOptions => {
+      const newSelectedOptions = { ...currentOptions }
+      newSelectedOptions[slot] = value
+      console.log(newSelectedOptions)
+      return newSelectedOptions;
+      })
+  }
     return(
       <>
-    <CreateGenderSelects genders={gen} wear={wear}/>
+    <GenderSelects genders={gen} wear={wear} selectedWear={selectedOptions} onChange={(slot, value)=>{onWearChange(slot, value)}}/>
   <Canvas 
   camera={{ position: [0, 0.1, 0.3] }}
     shadowMap
@@ -78,7 +101,7 @@ export default function Home(){
           shadow-camera-near = {0.1}
           castShadow />
     <Suspense fallback={null}><Panorama /></Suspense>
-    <Model url ={ '/models/max_characters/untitled.glb' } position={[0, 0, 0]} scale={[10,10,10]} onWearLoaded={(newWear)=> setWear(newWear) } castShadow></Model>
+    <Model url ={ '/models/max_characters/untitled.glb' } position={[0, 0, 0]} scale={[10,10,10]} onWearLoaded={(newWear) => {onWearLoaded(newWear)}} selectedWear={selectedOptions} castShadow></Model>
     <Plane rotation={[Math.PI/2, 0, 0]} position={[0, 0, 0]}></Plane>
 
     <mesh

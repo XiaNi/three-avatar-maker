@@ -1,18 +1,18 @@
 
-export default function CalculateWearOptions(baseGen, genderWear){
+export default function CalculateWearOptions(baseGen, genderWear, selectedWear, onChange){
+  console.log(baseGen)
     let option = ''
     let res = []
     genderWear[baseGen].map((item, i) => {
-        let currOption = item[0]
+        let currOption = item.slot
             if(option !== currOption){
               option = currOption;
               {res.push(
                <label key = {i}>{currOption}
-                 <select key={i}>
-                   <option key={'none'} name={'none'}>None</option>
+                 <select key={i} onChange={ e => onChange(item.slot, item.key)} value={selectedWear[currOption]}>
                    {genderWear[baseGen].map((item, i) => { 
-                       if(item[0] === currOption){
-                        return <option key={i}>{item[1]}</option>
+                       if(item.slot === currOption){
+                        return <option key={i}>{item.title}</option>
                        }  
                     })}
                  </select>

@@ -7,11 +7,12 @@ export default function Model({...props}) {
     if(glb)(console.log(glb.scene.children[0].children[0].children))
     return glb ? <primitive object={glb.scene} position = {props.position} scale = {props.scale} castShadow  /> : null
 } */}
-import React, {useMemo} from 'react'
+import React, {useMemo, useState} from 'react'
 import { GLTFLoader } from '../node_modules/three/examples/jsm/loaders/GLTFLoader'
 
 export default function Model({...props}){
-  let model
+  //let model
+  const [model, set] = useState()
 
   useMemo(() => new GLTFLoader().load(props.url, loop), [props.url])
   
@@ -24,17 +25,29 @@ export default function Model({...props}){
     let meshes = model.scene.children[0].children[0].children
     meshes.forEach( element => {
       if(!element.isGroup || !element.isMesh){
-        let item = element.name.split('_')//name
-        if(wear.hasOwnProperty(item[1])){
-            wear[item[1]].push([item[0], `${item[2]} ${item[3]}`, element])
+        let nameParts = element.name.split('_')//name
+        let slot = nameParts[0]
+        let gender = nameParts[1]
+        let optionName = nameParts[2]
+        let LOD = nameParts[3]
+      
+        if(wear.hasOwnProperty(gender)){
+            wear[gender].push({slot, key: element.name, title : optionName, LOD: LOD, element})
         } else{
           for(let key in wear){
-            wear[key].push([item[0], `${item[2]} ${item[3]}`, element])
+            wear[key].push({slot, key: element.name, title: gender, LOD : optionName, element})//// title is gender, LOD is optionName
           }
         }
       }
     }) 
     props.onWearLoaded(wear)
+    set(model)
+  }
+  if(model) {
+    model.scene.children[0].children[0].children.forEach( element => {
+      let [slot] = element.name.split('_')
+      element.visible = props.selectedWear[slot] === element.name
+    })
   }
   return model ? <primitive object={model.scene} position = {props.position} scale = {props.scale} castShadow  /> : null
 
