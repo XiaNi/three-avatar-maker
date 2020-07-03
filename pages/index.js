@@ -1,10 +1,8 @@
 import * as THREE                                        from 'three'
 import React, { Suspense, useRef, useState }             from 'react'
-import NoSSR                                             from 'react-no-ssr'
 import { Canvas, useLoader, useThree, useFrame, extend } from 'react-three-fiber'
 import { OrbitControls }                                 from '../node_modules/three/examples/jsm/controls/OrbitControls'
 import Model                                             from '../components/ModelLoader'
-import CalculateWearOptions                              from '../components/CalculateWearOptions'
 import GenderSelects                                     from '../components/GenderSelect'
 
 extend({ OrbitControls })
@@ -56,52 +54,56 @@ const CameraControls = () => {
   return <orbitControls ref={ controls } args={ [camera, domElement] }/>
 }
 
-let gen = {
+const genders = {
   M: 'Male',
   F: 'Female',
-  A: 'Andriod'
+  A: 'Android'
 }
 export default function Home() {
 
   let [wear, setWear] = useState({
-    M: [],
-    F: [],
-    A: []
+    byGender: {
+      M: [],
+      F: [],
+      A: []
+    },
+    selectedOptions: { gender: 'F' }
   })
   console.log('re-render --------- HOME -------- ')
-  let [selectedOptions, setSelectedOptions] = useState({ gender: 'F' })
 
-  function setDefaultByGender(gender) {
-    setSelectedOptions(currentOptions => {
-      const newSelectedOptions = { gender: gender }
-      wear[gender].forEach(wear => {
-        const currOption = newSelectedOptions[wear.slot]
-        if (!currOption) {
-          newSelectedOptions[wear.slot] = wear.key
-        }
-      })
-      console.log(newSelectedOptions)
-      return newSelectedOptions
+  function getDefaultsByGender(gender, genderWear) {
+    const newSelectedOptions = { gender: gender }
+    genderWear.forEach(wearInfo => {
+      const currOption = newSelectedOptions[wearInfo.slot]
+      if (!currOption) {
+        newSelectedOptions[wearInfo.slot] = wearInfo.key
+      }
     })
+
+    return newSelectedOptions
   }
 
   function onWearLoaded(newWear) {
-    setWear(newWear)
-    setDefaultByGender(selectedOptions.gender)
+    setWear({
+      byGender: newWear,
+      selectedOptions: getDefaultsByGender(wear.selectedOptions.gender, newWear[wear.selectedOptions.gender])
+    })
   }
 
   function onWearChange(slot, value) {
-    console.log('onWearChange', slot, value)
-    if (slot === 'gender') {
-      setDefaultByGender(value)
-    } else {
-      setSelectedOptions(currentOptions => {
-        const newSelectedOptions = { ...currentOptions }
+    setWear((wear) => {
+      let newSelectedOptions = { ...wear.selectedOptions }
+      if (slot === 'gender') {
+          newSelectedOptions = getDefaultsByGender(value, wear.byGender[value])
+      } else {
         newSelectedOptions[slot] = value
-        console.log('newSelectedOptions', newSelectedOptions)
-        return newSelectedOptions
-      })
-    }
+      }
+
+      return {
+        ...wear,
+        selectedOptions: newSelectedOptions
+      }
+    })
   }
 
   const genderSelectsStyles = {
@@ -116,7 +118,7 @@ export default function Home() {
   return (
     <>
       <div style={ genderSelectsStyles }>
-        <GenderSelects genders={ gen } wear={ wear } selectedWear={ selectedOptions }
+        <GenderSelects genders={ genders } wear={ wear.byGender } selectedWear={ wear.selectedOptions }
                        onChange={ (slot, value) => {onWearChange(slot, value)} }/>
       </div>
       <Canvas
@@ -152,7 +154,7 @@ export default function Home() {
         <group position={[0, -4, 0]}>
           <Suspense fallback={ null }>
             <Model url={ '/models/Characters.glb' } position={ [0, 0, 0] } scale={[avatarScale, avatarScale, avatarScale]}
-                   onWearLoaded={ (newWear) => {onWearLoaded(newWear)} } selectedWear={ selectedOptions }
+                   onWearLoaded={ (newWear) => {onWearLoaded(newWear)} } selectedWear={ wear.selectedOptions }
                    castShadow />
           </Suspense>
           <ShadowPlane rotation={ [ -Math.PI / 2, 0, 0] } position={ [0, 0, 0] } />
